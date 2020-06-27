@@ -2152,11 +2152,11 @@ namespace CG_Project3
             ActiveEdgeTable = new List<AET>();
             int iter = 0;
             int iterY;
-            for(int i = miny; i < maxy; i++)
+            for (int i = miny; i < maxy; i++)
             {
                 iterY = i;
                 ActiveEdgeTable.RemoveAll(edge => edge.ymax <= iterY);
-                if(EdgeTable[iter].y == iterY)
+                if (EdgeTable[iter].y == iterY)
                 {
                     foreach (var it in EdgeTable[iter].aETs)
                         ActiveEdgeTable.Add(it);
@@ -2165,8 +2165,10 @@ namespace CG_Project3
                 ActiveEdgeTable.Sort(CompareEdges);
                 int len = ActiveEdgeTable.Count;
                 for (int j = 0; j < len; j += 2)
-                    DrawLine(new Line() { color=buttColor, thickness=1, initX = (int)ActiveEdgeTable[j].x, initY = iterY, endX = (int)ActiveEdgeTable[j+1].x, endY=iterY });
-
+                {
+                    if (len % 2 == 0)
+                        DrawLine(new Line() { color = buttColor, thickness = 1, initX = (int)ActiveEdgeTable[j].x, initY = iterY, endX = (int)ActiveEdgeTable[j + 1].x, endY = iterY });
+                }
                 foreach (var item in ActiveEdgeTable)
                     item.Step();
             }
@@ -3216,6 +3218,15 @@ namespace CG_Project3
                 pp.D = d;
 
                 c.PP = pp;
+
+                Coords n = new Coords();
+
+                n.X = c.P.X / r;
+                n.Y = c.P.Y / r;
+                n.Z = c.P.Z / r;
+                n.D = 0;
+
+                c.N = n;
 
                 vertices.Add(c);
             }
