@@ -93,6 +93,8 @@ namespace CG_Project3
             cPosX = 0;
             cPosY = 0;
             cPosZ = 30;
+
+            GenerateLights();
         }
 
         private void newImage(object sender, RoutedEventArgs e)
@@ -2475,7 +2477,7 @@ namespace CG_Project3
             public int thickness;
         }
 
-        class Polygon
+        public class Polygon
         {
             public List<int> xs;
             public List<int> ys;
@@ -3073,6 +3075,26 @@ namespace CG_Project3
                 return res;
             }
 
+            public static Coords operator +(Coords c1, Coords c2)
+            {
+                Coords res = new Coords();
+                res.X = c1.X + c2.X;
+                res.Y = c1.Y + c2.Y;
+                res.Z = c1.Z + c2.Z;
+                res.D = 1;
+                return res;
+            }
+
+            public static Coords operator *(Coords c1, double t)
+            {
+                Coords res = new Coords();
+                res.X = c1.X * t;
+                res.Y = c1.Y * t;
+                res.Z = c1.Z * t;
+                res.D = 1;
+                return res;
+            }
+
             public double Norm()
             {
                 return Math.Sqrt(X * X + Y * Y + Z * Z);
@@ -3088,6 +3110,11 @@ namespace CG_Project3
             public Vert(Coords p)
             {
                 P = p;
+            }
+
+            public Vert()
+            {
+
             }
         }
 
@@ -3106,8 +3133,140 @@ namespace CG_Project3
             }
         }
 
+        public Polygon ScreenClipPoly(Polygon p)
+        {
+            Polygon res = new Polygon();
+            res.color = p.color;
+            res.fillColor = p.fillColor;
+            res.sfill = p.sfill;
+            res.thickness = p.thickness;
+
+            res.xs = new List<int>();
+            res.ys = new List<int>();
+
+            MyRectangle clip = new MyRectangle();
+            clip.initX = 0;
+            clip.initY = 0;
+            clip.endX = imgWidth;
+            clip.endY = imgWidth;
+
+            int len = p.xs.Count;
+
+            for(int i = 0; i < len; i++)
+            {
+                Point p1;
+                Point p2;
+
+                if(i != len - 1)
+                {
+                    p1 = new Point(p.xs[i], p.ys[i]);
+                    p2 = new Point(p.xs[i + 1], p.ys[i + 1]);
+                }
+                else
+                {
+                    p1 = new Point(p.xs[i], p.ys[i]);
+                    p2 = new Point(p.xs[0], p.ys[0]);
+                }
+
+
+                float dx = (float)(p2.X - p1.X), dy = (float)(p2.Y - p1.Y);
+                float tE = 0, tL = 1;
+
+                int left;
+                int right;
+                int top;
+                int bottom;
+                if (clip.initX < clip.endX)
+                {
+                    left = clip.initX;
+                    right = clip.endX;
+                }
+                else
+                {
+                    left = clip.endX;
+                    right = clip.initX;
+                }
+                if (clip.initY < clip.endY)
+                {
+                    bottom = clip.initY;
+                    top = clip.endY;
+                }
+                else
+                {
+                    bottom = clip.endY;
+                    top = clip.initY;
+                }
+
+                if (Clip(-dx, (float)(p1.X - left), ref tE, ref tL))
+                {
+                    if (Clip(dx, (float)(right - p1.X), ref tE, ref tL))
+                    {
+                        if (Clip(-dy, (float)(p1.Y - bottom), ref tE, ref tL))
+                        {
+                            if (Clip(dy, (float)(top - p1.Y), ref tE, ref tL))
+                            {
+                                if (tL < 1)
+                                {
+                                    p2.X = p1.X + dx * tL;
+                                    p2.Y = p1.Y + dy * tL;
+                                }
+                                if (tE > 0)
+                                {
+                                    p1.X += dx * tE;
+                                    p1.Y += dy * tE;
+                                }
+
+                                if (i == 0)
+                                {
+                                    res.xs.Add((int)p1.X);
+                                    res.xs.Add((int)p2.X);
+                                    res.ys.Add((int)p1.Y);
+                                    res.ys.Add((int)p2.Y);
+                                }
+                                else
+                                {
+                                    /*if ((int)p1.X == p.xs[i])
+                                    {
+                                        if (i != len - 1)
+                                        {
+                                            res.xs.Add((int)p2.X);
+                                            res.ys.Add((int)p2.Y);
+                                        }
+                                    }
+                                    else
+                                    {*/
+                                        if(i != len - 1)
+                                        {
+                                            res.xs.Add((int)p1.X);
+                                            res.xs.Add((int)p2.X);
+                                            res.ys.Add((int)p1.Y);
+                                            res.ys.Add((int)p2.Y);
+                                        }
+                                        else
+                                        {
+                                            res.xs.Add((int)p1.X);
+                                            res.ys.Add((int)p1.Y);
+                                            if((int)p2.X != p.xs[0])
+                                            {
+                                                res.xs.Add((int)p2.X);
+                                                res.ys.Add((int)p2.Y);
+                                            }
+                                        }
+                                    //}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return res;
+        }
+
         public void DrawTriangle(Triangle t, Color c)
         {
+            writeableBitmap.Lock();
+
             /*DrawLine(new Line() { initX = (int)t.v1.PP.X, initY = (int)t.v1.PP.Y, endX = (int)t.v2.PP.X, endY = (int)t.v2.PP.Y, color = buttColor, thickness = 1 });
             DrawLine(new Line() { initX = (int)t.v1.PP.X, initY = (int)t.v1.PP.Y, endX = (int)t.v3.PP.X, endY = (int)t.v3.PP.Y, color = buttColor, thickness = 1 });
             DrawLine(new Line() { initX = (int)t.v3.PP.X, initY = (int)t.v3.PP.Y, endX = (int)t.v2.PP.X, endY = (int)t.v2.PP.Y, color = buttColor, thickness = 1 });
@@ -3131,11 +3290,22 @@ namespace CG_Project3
             p.color = t.c;
             p.fillColor = t.c;
 
-            DrawPolygon(p);
+            Polygon res = ScreenClipPoly(p);
+
+            DrawPolygon(res);
+
+            var newcol = PhongCol(t.v1, t.c);
+            DrawPixel((int)t.v1.PP.X, (int)t.v1.PP.Y, newcol);
+
+            Interpol1(t.v1, t.v2, t.c);
+            Interpol1(t.v2, t.v3, t.c);
+            Interpol1(t.v3, t.v1, t.c);
+
+            writeableBitmap.Unlock();
         }
 
-        readonly int n = 12;
-        readonly int m = 12;
+        readonly int n = 20;
+        readonly int m = 20;
         readonly double r = 8;
 
         List<Coords> positions;
@@ -3147,6 +3317,44 @@ namespace CG_Project3
         int cPosX;
         int cPosY;
         int cPosZ;
+
+        //Ring 1
+        Color c1 = Colors.Blue;
+        //Ring 2
+        Color c2 = Colors.Blue;
+        //Caps
+        Color c3 = Colors.Blue;
+
+        //Phong illumination
+        Vector3D ka = new Vector3D(0.2, 0.2, 0.2);
+        Vector3D kd = new Vector3D(0.4, 0.6, 0.5);
+        Vector3D ks = new Vector3D(0.8, 0.8, 0.8);
+        int spec = 2;
+        Vector3D Ia = new Vector3D(0, 0, 255);
+
+        public class PointLight
+        {
+            public Vector3D point;
+            public Vector3D intensity;
+        }
+
+        public class DirectionalLight
+        {
+            public Vector3D direction;
+            public Vector3D intensity;
+        }
+
+        public class SpotLight
+        {
+            public Vector3D point;
+            public Vector3D direction;
+            public Vector3D intensity;
+            public double focus;
+        }
+
+        List<PointLight> pointLights;
+        List<DirectionalLight> directionalLights;
+        List<SpotLight> spotLights;
 
         private void CalcSphere(object sender, RoutedEventArgs e)
         {
@@ -3235,31 +3443,31 @@ namespace CG_Project3
 
             for(int i = 0; i < m - 1; i++)
             {
-                triangles.Add(new Triangle(vertices[0], vertices[i + 2], vertices[i + 1]) { c = Colors.Orange });
+                triangles.Add(new Triangle(vertices[0], vertices[i + 2], vertices[i + 1]) { c = c3 });
             }
-            triangles.Add(new Triangle(vertices[0], vertices[1], vertices[m]) { c = Colors.Orange });
-
+            triangles.Add(new Triangle(vertices[0], vertices[1], vertices[m]) { c = c3 });
+            
             for(int i = 0; i < n - 1; i++)
             {
                 for(int j = 1; j < m; j++)
                 {
-                    triangles.Add(new Triangle(vertices[i * m + j], vertices[i * m + j + 1], vertices[(i + 1) * m + j + 1]) { c = Colors.Blue });
+                    triangles.Add(new Triangle(vertices[i * m + j], vertices[i * m + j + 1], vertices[(i + 1) * m + j + 1]) { c = c2 });
                 }
-                triangles.Add(new Triangle(vertices[(i + 1) * m], vertices[i * m + 1], vertices[(i + 1) * m + 1]) { c = Colors.Blue });
-
+                triangles.Add(new Triangle(vertices[(i + 1) * m], vertices[i * m + 1], vertices[(i + 1) * m + 1]) { c = c2 });
+                
                 for (int j = 1; j < m; j++)
                 {
-                    triangles.Add(new Triangle(vertices[i * m + j], vertices[(i + 1) * m + j + 1], vertices[(i + 1) * m + j]) { c = Colors.Yellow });
+                    triangles.Add(new Triangle(vertices[i * m + j], vertices[(i + 1) * m + j + 1], vertices[(i + 1) * m + j]) { c = c1 });
                 }
-                triangles.Add(new Triangle(vertices[(i + 1) * m], vertices[(i + 1) * m + 1], vertices[(i + 2) * m]) { c = Colors.Yellow });
+                triangles.Add(new Triangle(vertices[(i + 1) * m], vertices[(i + 1) * m + 1], vertices[(i + 2) * m]) { c = c1 });
             }
 
             for (int i = 0; i < m - 1; i++)
             {
-                triangles.Add(new Triangle(vertices[m * n + 1], vertices[(n - 1) * m + i + 1], vertices[(n - 1) * m + i + 2]) { c = Colors.Orange });
+                triangles.Add(new Triangle(vertices[m * n + 1], vertices[(n - 1) * m + i + 1], vertices[(n - 1) * m + i + 2]) { c = c3 });
             }
-            triangles.Add(new Triangle(vertices[m * n + 1], vertices[m * n], vertices[(n - 1) * m + 1]) { c = Colors.Orange });
-
+            triangles.Add(new Triangle(vertices[m * n + 1], vertices[m * n], vertices[(n - 1) * m + 1]) { c = c3 });
+            
             foreach (var t in triangles)
             {
                 /*List<Vert> list = new List<Vert>();
@@ -3340,6 +3548,349 @@ namespace CG_Project3
                                           (float)cY.X, (float)cY.Y, (float)cY.Z, (float)Vector3D.DotProduct(cY, cPos),
                                           (float)cZ.X, (float)cZ.Y, (float)cZ.Z, (float)Vector3D.DotProduct(cZ, cPos),
                                           0, 0, 0, 1);
+
+            return res;
+        }
+
+        private void GenerateLights()
+        {
+            pointLights = new List<PointLight>();
+
+            PointLight p = new PointLight();
+            p.point = new Vector3D(-20, 20, 20);
+            p.intensity = new Vector3D(255, 255, 255);
+            pointLights.Add(p);
+
+            directionalLights = new List<DirectionalLight>();
+
+            /*DirectionalLight d = new DirectionalLight();
+            d.direction = new Vector3D(10, 10, 10);
+            d.intensity = new Vector3D(255, 255, 255);
+            directionalLights.Add(d);*/
+
+            spotLights = new List<SpotLight>();
+        }
+
+        private List<Point> GetLine(Vert v1, Vert v2)
+        {
+            List<Point> res = new List<Point>();
+
+            int dx = (int)v2.PP.X - (int)v1.PP.X;
+            int dy = (int)v2.PP.Y - (int)v1.PP.Y;
+
+            if (dx >= 0 && dy >= 0)
+            {
+                if (Math.Abs(dx) > Math.Abs(dy))
+                {
+                    int d = 2 * dy - dx;
+                    int dH = 2 * dy;
+                    int dV = 2 * (dy - dx);
+                    int x = (int)v1.PP.X, y = (int)v1.PP.Y;
+                    res.Add(new Point(x, y));
+                    while (x < (int)v2.PP.X)
+                    {
+                        if (d < 0)
+                        {
+                            d += dH;
+                            x++;
+                        }
+                        else
+                        {
+                            d += dV;
+                            x++;
+                            y++;
+                        }
+                        res.Add(new Point(x, y));
+                    }
+                }
+                else
+                {
+                    int d = 2 * dx - dy;
+                    int dH = 2 * dx;
+                    int dV = 2 * (dx - dy);
+                    int x = (int)v1.PP.X, y = (int)v1.PP.Y;
+                    res.Add(new Point(x, y));
+                    while (y < (int)v2.PP.Y)
+                    {
+                        if (d < 0)
+                        {
+                            d += dH;
+                            y++;
+                        }
+                        else
+                        {
+                            d += dV;
+                            y++;
+                            x++;
+                        }
+                        res.Add(new Point(x, y));
+                    }
+                }
+            }
+            if (dx < 0 && dy >= 0)
+            {
+                if (Math.Abs(dx) > Math.Abs(dy))
+                {
+                    int d = 2 * dy + dx;
+                    int dH = 2 * dy;
+                    int dV = 2 * (dy + dx);
+                    int x = (int)v1.PP.X, y = (int)v1.PP.Y;
+                    res.Add(new Point(x, y));
+                    while (x > (int)v2.PP.X)
+                    {
+                        if (d < 0)
+                        {
+                            d += dH;
+                            x--;
+                        }
+                        else
+                        {
+                            d += dV;
+                            x--;
+                            y++;
+                        }
+                        res.Add(new Point(x, y));
+                    }
+                }
+                else
+                {
+                    int d = 2 * -dx - dy;
+                    int dH = 2 * -dx;
+                    int dV = 2 * (-dx - dy);
+                    int x = (int)v1.PP.X, y = (int)v1.PP.Y;
+                    res.Add(new Point(x, y));
+                    while (y < (int)v2.PP.Y)
+                    {
+                        if (d < 0)
+                        {
+                            d += dH;
+                            y++;
+                        }
+                        else
+                        {
+                            d += dV;
+                            y++;
+                            x--;
+                        }
+                        res.Add(new Point(x, y));
+                    }
+                }
+            }
+            if (dx < 0 && dy < 0)
+            {
+                if (Math.Abs(dx) > Math.Abs(dy))
+                {
+                    int d = 2 * -dy + dx;
+                    int dH = 2 * -dy;
+                    int dV = 2 * (-dy + dx);
+                    int x = (int)v1.PP.X, y = (int)v1.PP.Y;
+                    res.Add(new Point(x, y));
+                    while (x > (int)v2.PP.X)
+                    {
+                        if (d < 0)
+                        {
+                            d += dH;
+                            x--;
+                        }
+                        else
+                        {
+                            d += dV;
+                            x--;
+                            y--;
+                        }
+                        res.Add(new Point(x, y));
+                    }
+                }
+                else
+                {
+                    int d = 2 * -dx + dy;
+                    int dH = 2 * -dx;
+                    int dV = 2 * (-dx + dy);
+                    int x = (int)v1.PP.X, y = (int)v1.PP.Y;
+                    res.Add(new Point(x, y));
+                    while (y > (int)v2.PP.Y)
+                    {
+                        if (d < 0)
+                        {
+                            d += dH;
+                            y--;
+                        }
+                        else
+                        {
+                            d += dV;
+                            y--;
+                            x--;
+                        }
+                        res.Add(new Point(x, y));
+                    }
+                }
+            }
+            if (dx >= 0 && dy < 0)
+            {
+                if (Math.Abs(dx) > Math.Abs(dy))
+                {
+                    int d = 2 * -dy - dx;
+                    int dH = 2 * -dy;
+                    int dV = 2 * (-dy - dx);
+                    int x = (int)v1.PP.X, y = (int)v1.PP.Y;
+                    res.Add(new Point(x, y));
+                    while (x < (int)v2.PP.X)
+                    {
+                        if (d < 0)
+                        {
+                            d += dH;
+                            x++;
+                        }
+                        else
+                        {
+                            d += dV;
+                            x++;
+                            y--;
+                        }
+                        res.Add(new Point(x, y));
+                    }
+                }
+                else
+                {
+                    int d = 2 * dx + dy;
+                    int dH = 2 * dx;
+                    int dV = 2 * (dx + dy);
+                    int x = (int)v1.PP.X, y = (int)v1.PP.Y;
+                    res.Add(new Point(x, y));
+                    while (y > (int)v2.PP.Y)
+                    {
+                        if (d < 0)
+                        {
+                            d += dH;
+                            y--;
+                        }
+                        else
+                        {
+                            d += dV;
+                            y--;
+                            x++;
+                        }
+                        res.Add(new Point(x, y));
+                    }
+                }
+            }
+
+            return res;
+        }
+
+        private void Interpol1(Vert v1, Vert v2, Color c)
+        {
+            writeableBitmap.Lock();
+
+            List<Point> list = GetLine(v1, v2);
+            foreach(var p in list)
+            {
+                Point p1 = new Point(v1.PP.X, v1.PP.Y);
+                Point p2 = new Point(v2.PP.X, v2.PP.Y);
+
+                var numer = p - p1;
+                var denom = p2 - p1;
+                var t = numer.Length / denom.Length;
+
+                Coords PP = v1.PP + (v2.PP - v1.PP) * t;
+                double u;
+                if (v1.PP.Z == v2.PP.Z)
+                    u = t;
+                else
+                    u = (1 / PP.Z - 1 / v1.PP.Z) / (1 / v2.PP.Z - 1 / v1.PP.Z);
+
+                Coords P = v1.P + (v2.P - v1.P) * u;
+                Coords N = v1.N + (v2.N - v1.N) * u;
+
+                Vert vert = new Vert(P);
+                vert.PP = PP;
+                vert.N = N;
+
+                var newcol = PhongCol(vert, c);
+                DrawPixel((int)vert.PP.X, (int)vert.PP.Y, newcol);
+            }
+
+            writeableBitmap.Unlock();
+        }
+
+        private Color PhongCol(Vert vert, Color col)
+        {
+            Vector3D p = new Vector3D(vert.P.X, vert.P.Y, vert.P.Z);
+            Vector3D n = new Vector3D(vert.N.X, vert.N.Y, vert.N.Z);
+            Vector3D pc = new Vector3D(cPosX, cPosY, cPosZ);
+
+            Vector3D v = (pc - p) / (pc - p).Length;
+
+            double Ir = Ia.X * ka.X;
+            double Ig = Ia.Y * ka.Y;
+            double Ib = Ia.Z * ka.Z;
+
+            foreach(var point in pointLights)
+            {
+                Vector3D li = (point.point - p) / (point.point - p).Length;
+                Vector3D ri = 2 * (Vector3D.DotProduct(li, n)) * n - li;
+                Vector3D Ii = point.intensity;
+
+                Ir += kd.X * Ii.X * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.X * Ii.X * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
+                Ig += kd.Y * Ii.Y * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.Y * Ii.Y * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
+                Ib += kd.Z * Ii.Z * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.Z * Ii.Z * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
+            }
+
+            foreach(var direct in directionalLights)
+            {
+                Vector3D li = -direct.direction;
+                Vector3D ri = 2 * (Vector3D.DotProduct(li, n)) * n - li;
+                Vector3D Ii = direct.intensity;
+
+                Ir += kd.X * Ii.X * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.X * Ii.X * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
+                Ig += kd.Y * Ii.Y * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.Y * Ii.Y * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
+                Ib += kd.Z * Ii.Z * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.Z * Ii.Z * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
+            }
+
+            foreach (var spot in spotLights)
+            {
+                Vector3D li = (spot.point - p) / (spot.point - p).Length;
+                Vector3D ri = 2 * (Vector3D.DotProduct(li, n)) * n - li;
+                Vector3D Ii = spot.intensity * Math.Max(Vector3D.DotProduct(-spot.direction, li), 0);
+
+                Ir += kd.X * Ii.X * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.X * Ii.X * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
+                Ig += kd.Y * Ii.Y * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.Y * Ii.Y * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
+                Ib += kd.Z * Ii.Z * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.Z * Ii.Z * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
+            }
+
+
+            //Vector3D li = (pointlight - p) / (pointlight - p).Length;
+            //Vector3D ri = 2 * (Vector3D.DotProduct(li, n)) * n - li;
+
+            //Vector3D Ii = Iip;
+
+            //var I = Vector3D.DotProduct(Ia, ka) + Vector3D.DotProduct(kd, Ii) * Math.Max(Vector3D.DotProduct(n, li), 0) + Vector3D.DotProduct(ks, Ii) * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
+            //var ratio = I / 255;
+
+            //Ir = Ia.X * ka.X + kd.X * Ii.X * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.X * Ii.X * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
+            //Ig = Ia.Y * ka.Y + kd.Y * Ii.Y * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.Y * Ii.Y * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
+            //Ib = Ia.Z * ka.Z + kd.Z * Ii.Z * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.Z * Ii.Z * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
+
+            Color res = new Color();
+            /*res.R = (byte)(col.R * ratio);
+            res.G = (byte)(col.G * ratio);
+            res.B = (byte)(col.B * ratio);
+            res.A = col.A;*/
+
+            res.R = (byte)(col.R * Ir / 255);
+            res.G = (byte)(col.G * Ig / 255);
+            res.B = (byte)(col.B * Ib / 255);
+            res.A = col.A;
+
+            /*res.R = col.R;
+            res.G = col.G;
+            res.B = col.B;
+            res.A = (byte)(col.A * ratio);*/
+
+            /*res.A = col.A;
+            res.R = (byte)Ir;
+            res.G = (byte)Ig;
+            res.B = (byte)Ib;*/
 
             return res;
         }
