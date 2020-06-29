@@ -99,6 +99,8 @@ namespace CG_Project3
             GenerateLights();
         }
 
+        #region Project3&4
+
         private void newImage(object sender, RoutedEventArgs e)
         {
             created = true;
@@ -3092,6 +3094,9 @@ namespace CG_Project3
             writeableBitmap.Unlock();
         }*/
 
+        #endregion
+
+        #region Project5
 
         //3d project
 
@@ -4206,6 +4211,8 @@ namespace CG_Project3
             public int y;
             public List<AET3D> aETs;
         }
+
+        #endregion
     }
 
 }
