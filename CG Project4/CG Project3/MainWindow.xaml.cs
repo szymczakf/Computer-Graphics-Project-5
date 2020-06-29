@@ -91,8 +91,10 @@ namespace CG_Project3
             pattern = null;
 
             cPosX = 0;
-            cPosY = 0;
+            cPosY = 10;
             cPosZ = 30;
+
+            zSlider.Minimum = r;
 
             GenerateLights();
         }
@@ -1678,6 +1680,45 @@ namespace CG_Project3
             }
         }
 
+        void ClearImgB()
+        {
+            int width = imgWidth;
+            int height = imgHeight;
+
+            //writeableBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
+            //drawSpace.Source = writeableBitmap;
+
+            try
+            {
+                writeableBitmap.Lock();
+
+                unsafe
+                {
+                    IntPtr pBackBuffer = writeableBitmap.BackBuffer;
+
+                    for (int i = 0; i < height; i++)
+                    {
+                        for (int j = 0; j < width; j++)
+                        {
+                            int color_data = 255 << 24; // A
+                            color_data |= 0 << 16; // R
+                            color_data |= 0 << 8;  // G
+                            color_data |= 0 << 0;  // B
+
+                            *((int*)pBackBuffer) = color_data;
+
+                            pBackBuffer += 4;
+                        }
+                    }
+                    writeableBitmap.AddDirtyRect(new Int32Rect(0, 0, width, height));
+                }
+            }
+            finally
+            {
+                writeableBitmap.Unlock();
+            }
+        }
+
         void RedrawFigures()
         {
             foreach (var line in lines)
@@ -2051,6 +2092,15 @@ namespace CG_Project3
         }
 
         private static int CompareEdges(AET e1, AET e2)
+        {
+            if (e1.x < e2.x)
+                return -1;
+            else if (e1.x > e2.x)
+                return 1;
+            return 0;
+        }
+
+        private static int CompareEdges3D(AET3D e1, AET3D e2)
         {
             if (e1.x < e2.x)
                 return -1;
@@ -3271,7 +3321,7 @@ namespace CG_Project3
             DrawLine(new Line() { initX = (int)t.v1.PP.X, initY = (int)t.v1.PP.Y, endX = (int)t.v3.PP.X, endY = (int)t.v3.PP.Y, color = buttColor, thickness = 1 });
             DrawLine(new Line() { initX = (int)t.v3.PP.X, initY = (int)t.v3.PP.Y, endX = (int)t.v2.PP.X, endY = (int)t.v2.PP.Y, color = buttColor, thickness = 1 });
             */
-            List<int> xs = new List<int>();
+            /*List<int> xs = new List<int>();
             List<int> ys = new List<int>();
 
             xs.Add((int)t.v1.PP.X);
@@ -3290,13 +3340,16 @@ namespace CG_Project3
             p.color = t.c;
             p.fillColor = t.c;
 
-            Polygon res = ScreenClipPoly(p);
+            Polygon res = ScreenClipPoly(p);*/
 
-            DrawPolygon(res);
+            //DrawPolygon(res);
 
-            var newcol = PhongCol(t.v1, t.c);
-            DrawPixel((int)t.v1.PP.X, (int)t.v1.PP.Y, newcol);
+            Interpol2(t);
 
+            /*var newcol = PhongCol(t.v1, t.c);
+            DrawPixel((int)t.v1.PP.X, (int)t.v1.PP.Y, newcol);*/
+
+            //Comment the next 3 lines for faster program, but there might be some tears in the sphere
             Interpol1(t.v1, t.v2, t.c);
             Interpol1(t.v2, t.v3, t.c);
             Interpol1(t.v3, t.v1, t.c);
@@ -3314,23 +3367,25 @@ namespace CG_Project3
 
         bool color;
 
+        //Position of the camera
         int cPosX;
         int cPosY;
         int cPosZ;
 
+        //Color(s) of the sphere
         //Ring 1
-        Color c1 = Colors.Blue;
+        Color c1 = Colors.Red;
         //Ring 2
-        Color c2 = Colors.Blue;
+        Color c2 = Colors.Red;
         //Caps
-        Color c3 = Colors.Blue;
+        Color c3 = Colors.Red;
 
-        //Phong illumination
+        //Phong illumination coefficients
         Vector3D ka = new Vector3D(0.2, 0.2, 0.2);
         Vector3D kd = new Vector3D(0.4, 0.6, 0.5);
         Vector3D ks = new Vector3D(0.8, 0.8, 0.8);
-        int spec = 2;
-        Vector3D Ia = new Vector3D(0, 0, 255);
+        double spec = 2;
+        Vector3D Ia = new Vector3D(1, 1, 1);
 
         public class PointLight
         {
@@ -3358,6 +3413,8 @@ namespace CG_Project3
 
         private void CalcSphere(object sender, RoutedEventArgs e)
         {
+            ClearImgB();
+
             color = true;
             positions = new List<Coords>();
 
@@ -3532,10 +3589,6 @@ namespace CG_Project3
         }
         private Matrix4x4 GenerateCam()
         {
-            //Coords cPos = new Coords(0, 0, 100, 1);
-            //Coords cTarget = new Coords(0, 0, 0, 1);
-            //Coords cUp = new Coords(0, 1, 0, 0);
-
             Vector3D cPos = new Vector3D(cPosX, cPosY, cPosZ);
             Vector3D cTarget = new Vector3D(0, 0, 0);
             Vector3D cUp = new Vector3D(0, 1, 0);
@@ -3558,17 +3611,24 @@ namespace CG_Project3
 
             PointLight p = new PointLight();
             p.point = new Vector3D(-20, 20, 20);
-            p.intensity = new Vector3D(255, 255, 255);
+            p.intensity = new Vector3D(1, 1, 1);
             pointLights.Add(p);
 
             directionalLights = new List<DirectionalLight>();
 
             /*DirectionalLight d = new DirectionalLight();
             d.direction = new Vector3D(10, 10, 10);
-            d.intensity = new Vector3D(255, 255, 255);
+            d.intensity = new Vector3D(1, 1, 1);
             directionalLights.Add(d);*/
 
             spotLights = new List<SpotLight>();
+
+            /*SpotLight s = new SpotLight();
+            s.direction = new Vector3D(-10, -10, -10);
+            s.point = new Vector3D(20, 20, 20);
+            s.intensity = new Vector3D(1, 1, 1);
+            s.focus = 10;
+            spotLights.Add(s);*/
         }
 
         private List<Point> GetLine(Vert v1, Vert v2)
@@ -3793,6 +3853,8 @@ namespace CG_Project3
                 var t = numer.Length / denom.Length;
 
                 Coords PP = v1.PP + (v2.PP - v1.PP) * t;
+                PP.X = p.X;
+                PP.Y = p.Y;
                 double u;
                 if (v1.PP.Z == v2.PP.Z)
                     u = t;
@@ -3807,10 +3869,230 @@ namespace CG_Project3
                 vert.N = N;
 
                 var newcol = PhongCol(vert, c);
-                DrawPixel((int)vert.PP.X, (int)vert.PP.Y, newcol);
+                DrawBrush((int)vert.PP.X, (int)vert.PP.Y, newcol, 1); //Change 1 to 3 for smoother sphere but slower program
             }
 
             writeableBitmap.Unlock();
+        }
+
+        private void Interpol2(Triangle tr)
+        {
+            List<Vert> verts = new List<Vert>();
+            verts.Add(tr.v1);
+            verts.Add(tr.v2);
+            verts.Add(tr.v3);
+
+            Vert v1 = new Vert();
+            Vert v2 = new Vert();
+            Vert v3 = new Vert();
+
+            int maxy = -Int32.MaxValue;
+            int miny = Int32.MaxValue;
+
+            foreach (var v in verts)
+            {
+                if (v.PP.Y > maxy)
+                {
+                    maxy = (int)v.PP.Y;
+                    v2 = v;
+                }
+                if (v.PP.Y < miny)
+                {
+                    miny = (int)v.PP.Y;
+                    v1 = v;
+                }
+            }
+
+            foreach(var v in verts)
+            {
+                if (v != v1 && v != v2)
+                    v3 = v;
+            }
+
+            List<int> ys = new List<int>();
+            foreach (var v in verts)
+            {
+                if (!ys.Contains((int)v.PP.Y))
+                    ys.Add((int)v.PP.Y);
+            }
+            ys.Sort();
+
+            List<ET3D> EdgeTable3D = new List<ET3D>();
+            foreach (var y in ys)
+            {
+                ET3D eT = new ET3D();
+                eT.y = y;
+                eT.aETs = new List<AET3D>();
+                EdgeTable3D.Add(eT);
+            }
+
+            //v1 - v2
+            double dx = v2.PP.X - v1.PP.X;
+            double dy = v2.PP.Y - v1.PP.Y;
+
+            int xmin, ymax, ymin;
+            xmin = (int)v1.PP.X;
+            ymax = (int)v2.PP.Y;
+            ymin = (int)v1.PP.Y;
+
+            if(dy != 0)
+            {
+                AET3D edge = new AET3D();
+                edge.x = xmin;
+                edge.ymax = ymax;
+                edge.oneOverM = dx / dy;
+                edge.v1 = v1;
+                edge.v2 = v2;
+
+                EdgeTable3D.Find(x => x.y == ymin).aETs.Add(edge);
+            }
+
+            //v1 - v3
+            dx = v3.PP.X - v1.PP.X;
+            dy = v3.PP.Y - v1.PP.Y;
+
+            xmin = (int)v1.PP.X;
+            ymax = (int)v3.PP.Y;
+            ymin = (int)v1.PP.Y;
+
+            if (dy != 0)
+            {
+                AET3D edge = new AET3D();
+                edge.x = xmin;
+                edge.ymax = ymax;
+                edge.oneOverM = dx / dy;
+                edge.v1 = v1;
+                edge.v2 = v3;
+
+                EdgeTable3D.Find(x => x.y == ymin).aETs.Add(edge);
+            }
+
+            //v3 - v2
+            dx = v2.PP.X - v3.PP.X;
+            dy = v2.PP.Y - v3.PP.Y;
+
+            xmin = (int)v3.PP.X;
+            ymax = (int)v2.PP.Y;
+            ymin = (int)v3.PP.Y;
+
+            if (dy != 0)
+            {
+                AET3D edge = new AET3D();
+                edge.x = xmin;
+                edge.ymax = ymax;
+                edge.oneOverM = dx / dy;
+                edge.v1 = v3;
+                edge.v2 = v2;
+
+                EdgeTable3D.Find(x => x.y == ymin).aETs.Add(edge);
+            }
+
+            List<AET3D> ActiveEdgeTable3D = new List<AET3D>();
+            int iter = 0;
+            int iterY;
+            for (int i = miny; i <= maxy; i++)
+            {
+                iterY = i;
+                ActiveEdgeTable3D.RemoveAll(edge => edge.ymax <= iterY);
+                if (EdgeTable3D[iter].y == iterY)
+                {
+                    foreach (var it in EdgeTable3D[iter].aETs)
+                        ActiveEdgeTable3D.Add(it);
+                    iter++;
+                }
+                ActiveEdgeTable3D.Sort(CompareEdges3D);
+                int len = ActiveEdgeTable3D.Count;
+                for (int j = 0; j < len; j += 2)
+                {
+                    if (len % 2 == 0)
+                    {
+                        //first edge
+                        Point p1 = new Point(ActiveEdgeTable3D[j].x, iterY);
+                        Point e1 = new Point(ActiveEdgeTable3D[j].v1.PP.X, ActiveEdgeTable3D[j].v1.PP.Y);
+                        Point e2 = new Point(ActiveEdgeTable3D[j].v2.PP.X, ActiveEdgeTable3D[j].v2.PP.Y);
+
+                        var numer = p1 - e1;
+                        var denom = e2 - e1;
+                        var t = numer.Length / denom.Length;
+
+                        Coords PP = ActiveEdgeTable3D[j].v1.PP + (ActiveEdgeTable3D[j].v2.PP - ActiveEdgeTable3D[j].v1.PP) * t;
+                        PP.X = ActiveEdgeTable3D[j].x;
+                        PP.Y = iterY;
+                        double u;
+                        if (ActiveEdgeTable3D[j].v1.PP.Z == ActiveEdgeTable3D[j].v2.PP.Z)
+                            u = t;
+                        else
+                            u = (1 / PP.Z - 1 / ActiveEdgeTable3D[j].v1.PP.Z) / (1 / ActiveEdgeTable3D[j].v2.PP.Z - 1 / ActiveEdgeTable3D[j].v1.PP.Z);
+
+                        Coords P = ActiveEdgeTable3D[j].v1.P + (ActiveEdgeTable3D[j].v2.P - ActiveEdgeTable3D[j].v1.P) * u;
+                        Coords N = ActiveEdgeTable3D[j].v1.N + (ActiveEdgeTable3D[j].v2.N - ActiveEdgeTable3D[j].v1.N) * u;
+
+                        Vert vert = new Vert(P);
+                        vert.PP = PP;
+                        vert.N = N;
+
+                        //second edge
+                        Point p2 = new Point(ActiveEdgeTable3D[j + 1].x, iterY);
+                        Point e12 = new Point(ActiveEdgeTable3D[j+1].v1.PP.X, ActiveEdgeTable3D[j+1].v1.PP.Y);
+                        Point e22 = new Point(ActiveEdgeTable3D[j+1].v2.PP.X, ActiveEdgeTable3D[j+1].v2.PP.Y);
+
+                        numer = p2 - e12;
+                        denom = e22 - e12;
+                        t = numer.Length / denom.Length;
+
+                        Coords PP2 = ActiveEdgeTable3D[j+1].v1.PP + (ActiveEdgeTable3D[j+1].v2.PP - ActiveEdgeTable3D[j+1].v1.PP) * t;
+                        PP2.X = ActiveEdgeTable3D[j+1].x;
+                        PP2.Y = iterY;
+                        if (ActiveEdgeTable3D[j+1].v1.PP.Z == ActiveEdgeTable3D[j+1].v2.PP.Z)
+                            u = t;
+                        else
+                            u = (1 / PP.Z - 1 / ActiveEdgeTable3D[j].v1.PP.Z) / (1 / ActiveEdgeTable3D[j].v2.PP.Z - 1 / ActiveEdgeTable3D[j].v1.PP.Z);
+
+                        Coords P2 = ActiveEdgeTable3D[j+1].v1.P + (ActiveEdgeTable3D[j+1].v2.P - ActiveEdgeTable3D[j+1].v1.P) * u;
+                        Coords N2 = ActiveEdgeTable3D[j+1].v1.N + (ActiveEdgeTable3D[j+1].v2.N - ActiveEdgeTable3D[j+1].v1.N) * u;
+
+                        Vert vert2 = new Vert(P2);
+                        vert2.PP = PP2;
+                        vert2.N = N2;
+
+                        //Interpol1(vert, vert2, tr.c);
+
+                        //interpolate
+                        for (int k = (int)ActiveEdgeTable3D[j].x; k <= ActiveEdgeTable3D[j+1].x; k++)
+                        {
+                            Point p3 = new Point(k, iterY);
+                            Point e13 = new Point(vert.PP.X, vert.PP.Y);
+                            Point e23 = new Point(vert2.PP.X, vert2.PP.Y);
+
+                            numer = p3 - e13;
+                            denom = e23 - e13;
+                            t = numer.Length / denom.Length;
+
+                            Coords PP3 = vert.PP + (vert2.PP - vert.PP) * t;
+                            PP3.X = k;
+                            PP3.Y = iterY;
+                            if (vert.PP.Z == vert2.PP.Z)
+                                u = t;
+                            else
+                                u = (1 / PP.Z - 1 / vert.PP.Z) / (1 / vert2.PP.Z - 1 / vert.PP.Z);
+
+                            Coords P3 = vert.P + (vert2.P - vert.P) * u;
+                            Coords N3 = vert.N + (vert2.N - vert.N) * u;
+
+                            Vert vert3 = new Vert(P3);
+                            vert3.PP = PP3;
+                            vert3.N = N3;
+
+                            var newcol = PhongCol(vert3, tr.c);
+                            DrawPixel((int)vert3.PP.X, (int)vert3.PP.Y, newcol);
+                        }
+
+                        //Interpol1(vert, vert2, tr.c);
+                    }
+                }
+                foreach (var item in ActiveEdgeTable3D)
+                    item.Step();
+            }
         }
 
         private Color PhongCol(Vert vert, Color col)
@@ -3825,22 +4107,28 @@ namespace CG_Project3
             double Ig = Ia.Y * ka.Y;
             double Ib = Ia.Z * ka.Z;
 
-            foreach(var point in pointLights)
+            //double I = Vector3D.DotProduct(Ia, ka);
+
+            foreach (var point in pointLights)
             {
                 Vector3D li = (point.point - p) / (point.point - p).Length;
                 Vector3D ri = 2 * (Vector3D.DotProduct(li, n)) * n - li;
                 Vector3D Ii = point.intensity;
+
+                //I += Vector3D.DotProduct(kd, Ii) * Math.Max(Vector3D.DotProduct(n, li), 0) + Vector3D.DotProduct(ks, Ii) * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
 
                 Ir += kd.X * Ii.X * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.X * Ii.X * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
                 Ig += kd.Y * Ii.Y * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.Y * Ii.Y * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
                 Ib += kd.Z * Ii.Z * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.Z * Ii.Z * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
             }
 
-            foreach(var direct in directionalLights)
+            foreach (var direct in directionalLights)
             {
                 Vector3D li = -direct.direction;
                 Vector3D ri = 2 * (Vector3D.DotProduct(li, n)) * n - li;
                 Vector3D Ii = direct.intensity;
+
+                //I += Vector3D.DotProduct(kd, Ii) * Math.Max(Vector3D.DotProduct(n, li), 0) + Vector3D.DotProduct(ks, Ii) * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
 
                 Ir += kd.X * Ii.X * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.X * Ii.X * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
                 Ig += kd.Y * Ii.Y * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.Y * Ii.Y * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
@@ -3853,44 +4141,24 @@ namespace CG_Project3
                 Vector3D ri = 2 * (Vector3D.DotProduct(li, n)) * n - li;
                 Vector3D Ii = spot.intensity * Math.Max(Vector3D.DotProduct(-spot.direction, li), 0);
 
+                //I += Vector3D.DotProduct(kd, Ii) * Math.Max(Vector3D.DotProduct(n, li), 0) + Vector3D.DotProduct(ks, Ii) * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
+
                 Ir += kd.X * Ii.X * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.X * Ii.X * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
                 Ig += kd.Y * Ii.Y * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.Y * Ii.Y * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
                 Ib += kd.Z * Ii.Z * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.Z * Ii.Z * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
             }
 
-
-            //Vector3D li = (pointlight - p) / (pointlight - p).Length;
-            //Vector3D ri = 2 * (Vector3D.DotProduct(li, n)) * n - li;
-
-            //Vector3D Ii = Iip;
-
-            //var I = Vector3D.DotProduct(Ia, ka) + Vector3D.DotProduct(kd, Ii) * Math.Max(Vector3D.DotProduct(n, li), 0) + Vector3D.DotProduct(ks, Ii) * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
-            //var ratio = I / 255;
-
-            //Ir = Ia.X * ka.X + kd.X * Ii.X * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.X * Ii.X * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
-            //Ig = Ia.Y * ka.Y + kd.Y * Ii.Y * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.Y * Ii.Y * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
-            //Ib = Ia.Z * ka.Z + kd.Z * Ii.Z * Math.Max(Vector3D.DotProduct(n, li), 0) + ks.Z * Ii.Z * Math.Pow(Math.Max(Vector3D.DotProduct(v, ri), 0), spec);
-
             Color res = new Color();
-            /*res.R = (byte)(col.R * ratio);
-            res.G = (byte)(col.G * ratio);
-            res.B = (byte)(col.B * ratio);
+
+            /*res.R = (byte)(col.R * I);
+            res.G = (byte)(col.G * I);
+            res.B = (byte)(col.B * I);
             res.A = col.A;*/
 
-            res.R = (byte)(col.R * Ir / 255);
-            res.G = (byte)(col.G * Ig / 255);
-            res.B = (byte)(col.B * Ib / 255);
+            res.R = (byte)(col.R * Ir);
+            res.G = (byte)(col.G * Ig);
+            res.B = (byte)(col.B * Ib);
             res.A = col.A;
-
-            /*res.R = col.R;
-            res.G = col.G;
-            res.B = col.B;
-            res.A = (byte)(col.A * ratio);*/
-
-            /*res.A = col.A;
-            res.R = (byte)Ir;
-            res.G = (byte)Ig;
-            res.B = (byte)Ib;*/
 
             return res;
         }
@@ -3903,8 +4171,40 @@ namespace CG_Project3
             cPosX = (int)xSlider.Value;
             cPosY = (int)ySlider.Value;
             cPosZ = (int)zSlider.Value;
-            ClearImg();
+            //ClearImgB();
             CalcSphere(this, e);
+        }
+
+        private void LSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (!created)
+                return;
+
+            pointLights[0].point.X = (int)xLSlider.Value;
+            pointLights[0].point.Y = (int)yLSlider.Value;
+            pointLights[0].point.Z = (int)zLSlider.Value;
+            //ClearImgB();
+            CalcSphere(this, e);
+        }
+
+        public class AET3D
+        {
+            public int ymax;
+            public double x;
+            public double oneOverM;
+            public Vert v1;
+            public Vert v2;
+
+            public void Step()
+            {
+                x += oneOverM;
+            }
+        }
+
+        public struct ET3D
+        {
+            public int y;
+            public List<AET3D> aETs;
         }
     }
 

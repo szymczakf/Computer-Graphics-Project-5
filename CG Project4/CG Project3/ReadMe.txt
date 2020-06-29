@@ -1,5 +1,5 @@
-CG Project 4 Filip Szymczak
-Vector Images
+CG Project 5 Filip Szymczak
+Vector Images + 3D Sphere with Phong Shading
 
 To create new image, select the width and height and press "New".
 To draw a line/circle/polygon/rectangle/capsule, select the appropriate tool in one toolbox
@@ -75,3 +75,14 @@ Click "Clear" delete currently stored figures and make a new image.
 
 Click "Save" to save the stored figures as a .txt file.
 Click "Load" to load a .txt file representing the figures.
+
+
+3D Sphere with Phong Shading
+
+First, one has to generate the image bitmap with "New".
+Then, the sphere will be created and displayed by pressing the "Calculate Sphere" button.
+The "Camera" sliders are responsible for the position of the camera (the sphere is in the centre of the coordinate system).
+The "Point light" sliders are responsible for the position of the white point light illuminating the sphere.
+
+All the coefficients for the shading as well as for the size of the sphere are available in code and commented properly for ease of use.
+Search for a comment "3D Project" in order to find them more easily.

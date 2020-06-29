@@ -6,7 +6,7 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:local="clr-namespace:CG_Project3"
         mc:Ignorable="d"
-        Title="Vector Graphics" Height="550" Width="800" MinHeight="400" MinWidth="500">
+        Title="Vector Graphics" Height="650" Width="800" MinHeight="400" MinWidth="500">
     <Grid Background="WhiteSmoke">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="150"/>
@@ -80,12 +80,27 @@
         <TextBox x:Name="xSlT" Grid.Column="0" Text="{Binding ElementName=xSlider, Path=Value, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Height="20" Width="25" Margin="115,410,0,0" TextAlignment="Center" VerticalAlignment="Top"/>
 
         <Label Content="y:" Margin="0,425,0,0" />
-        <Slider x:Name="ySlider" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="15,430,0,0" Width="100" Minimum="-100" Maximum="100" SmallChange="1" ValueChanged="Slider_ValueChanged"/>
+        <Slider x:Name="ySlider" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="15,430,0,0" Width="100" Minimum="-100" Maximum="100" SmallChange="1" ValueChanged="Slider_ValueChanged" Value="10"/>
         <TextBox x:Name="ySlT" Grid.Column="0" Text="{Binding ElementName=ySlider, Path=Value, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Height="20" Width="25" Margin="115,430,0,0" TextAlignment="Center" VerticalAlignment="Top"/>
 
         <Label Content="z:" Margin="0,445,0,0" />
         <Slider x:Name="zSlider" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="15,450,0,0" Width="100" Minimum="0" Maximum="100" SmallChange="1" ValueChanged="Slider_ValueChanged" Value="30"/>
         <TextBox x:Name="zSlT" Grid.Column="0" Text="{Binding ElementName=zSlider, Path=Value, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Height="20" Width="25" Margin="115,450,0,0" TextAlignment="Center" VerticalAlignment="Top"/>
+
+        <Label Content="Point Light:" Margin="0,470,0,0" />
+
+        <Label Content="x:" Margin="0,485,0,0" />
+        <Slider x:Name="xLSlider" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="15,490,0,0" Width="100" Minimum="-100" Maximum="100" SmallChange="1" ValueChanged="LSlider_ValueChanged" Value="-20"/>
+        <TextBox x:Name="xLSlT" Grid.Column="0" Text="{Binding ElementName=xLSlider, Path=Value, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Height="20" Width="25" Margin="115,490,0,0" TextAlignment="Center" VerticalAlignment="Top"/>
+
+        <Label Content="y:" Margin="0,505,0,0" />
+        <Slider x:Name="yLSlider" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="15,510,0,0" Width="100" Minimum="-100" Maximum="100" SmallChange="1" ValueChanged="LSlider_ValueChanged" Value="20"/>
+        <TextBox x:Name="yLSlT" Grid.Column="0" Text="{Binding ElementName=yLSlider, Path=Value, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Height="20" Width="25" Margin="115,510,0,0" TextAlignment="Center" VerticalAlignment="Top"/>
+
+        <Label Content="z:" Margin="0,525,0,0" />
+        <Slider x:Name="zLSlider" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="15,530,0,0" Width="100" Minimum="-100" Maximum="100" SmallChange="1" ValueChanged="LSlider_ValueChanged" Value="20"/>
+        <TextBox x:Name="zLSlT" Grid.Column="0" Text="{Binding ElementName=zLSlider, Path=Value, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Height="20" Width="25" Margin="115,530,0,0" TextAlignment="Center" VerticalAlignment="Top"/>
+
 
         <Button HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="50" Content="ReadMe" Margin="5,0,0,5" Click="readmeClick" />
 
