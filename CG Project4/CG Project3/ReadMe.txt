@@ -86,4 +86,5 @@ The "Point light" sliders are responsible for the position of the white point li
 One can also change the attributes of the sphere by changing the values of n, m and r and clicking the "Recalculate Sphere" button.
 
 All the coefficients for the shading as well as for the size of the sphere are available in code and commented properly for ease of use.
-Search for a comment "3D Project" in order to find them more easily.
+Search for a comment "3D Project" in order to find them more easily (region Project5).
+Should one want to rotate the sphere, uncomment the specified parts in the function "CalcSphere".
