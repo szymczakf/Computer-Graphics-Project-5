@@ -3322,10 +3322,6 @@ namespace CG_Project3
         {
             writeableBitmap.Lock();
 
-            /*DrawLine(new Line() { initX = (int)t.v1.PP.X, initY = (int)t.v1.PP.Y, endX = (int)t.v2.PP.X, endY = (int)t.v2.PP.Y, color = buttColor, thickness = 1 });
-            DrawLine(new Line() { initX = (int)t.v1.PP.X, initY = (int)t.v1.PP.Y, endX = (int)t.v3.PP.X, endY = (int)t.v3.PP.Y, color = buttColor, thickness = 1 });
-            DrawLine(new Line() { initX = (int)t.v3.PP.X, initY = (int)t.v3.PP.Y, endX = (int)t.v2.PP.X, endY = (int)t.v2.PP.Y, color = buttColor, thickness = 1 });
-            */
             /*List<int> xs = new List<int>();
             List<int> ys = new List<int>();
 
@@ -3351,20 +3347,23 @@ namespace CG_Project3
 
             Interpol2(t);
 
-            /*var newcol = PhongCol(t.v1, t.c);
-            DrawPixel((int)t.v1.PP.X, (int)t.v1.PP.Y, newcol);*/
-
             //Comment the next 3 lines for faster program, but there might be some tears in the sphere
             Interpol1(t.v1, t.v2, t.c);
             Interpol1(t.v2, t.v3, t.c);
             Interpol1(t.v3, t.v1, t.c);
 
+            //Slightly different version, use instead of Interpol1
+            /*Interpol3(t.v1, t.v2, t.c);
+            Interpol3(t.v2, t.v3, t.c);
+            Interpol3(t.v3, t.v1, t.c);*/
+
             writeableBitmap.Unlock();
         }
 
-        readonly int n = 20;
-        readonly int m = 20;
-        readonly double r = 8;
+        //Default attributes of the sphere
+        int n = 20;
+        int m = 20;
+        double r = 8;
 
         List<Coords> positions;
         List<Vert> vertices;
@@ -3418,8 +3417,6 @@ namespace CG_Project3
 
         private void CalcSphere(object sender, RoutedEventArgs e)
         {
-            ClearImgB();
-
             color = true;
             positions = new List<Coords>();
 
@@ -3439,55 +3436,12 @@ namespace CG_Project3
                 }
             }
 
-            positions.Add(new Coords(0, -r, 0, 1));
-
-            double s = imgWidth / 2 * (1 / Math.Tan(Math.PI / 4));
-            Matrix4x4 p = new Matrix4x4((float)-s, 0, (float)imgWidth / 2, 0,
-                                                 0, (float)s, (float)imgHeight / 2, 0,
-                                                 0, 0, 0, 1,
-                                                 0, 0, 1, 0);
-
-            Matrix4x4 Tx = new Matrix4x4(1, 0, 0, 30,
-                                         0, 1, 0, 0,
-                                         0, 0, 1, 0,
-                                         0, 0, 0, 1);
-
-            double a = Math.PI / 6;
-            Matrix4x4 Rx = new Matrix4x4(1, 0, 0, 0,
-                                         0, (float)Math.Cos(a), (float)-Math.Sin(a), 0,
-                                         0, (float)Math.Sin(a), (float)Math.Cos(a), 0,
-                                         0, 0, 0, 1);
-
-            Matrix4x4 cam = GenerateCam();
-
-            Matrix4x4 res = p * cam;
+            positions.Add(new Coords(0, -r, 0, 1));            
 
             vertices = new List<Vert>();
             foreach (var i in positions)
             {
                 Vert c = new Vert(i);
-
-                Coords pp = new Coords();
-
-                double z = res.M31 * c.P.X + res.M32 * c.P.Y + res.M33 * c.P.Z + res.M34 * c.P.D;
-                double d = res.M41 * c.P.X + res.M42 * c.P.Y + res.M43 * c.P.Z + res.M44 * c.P.D;
-                double x = res.M11 * c.P.X + res.M12 * c.P.Y + res.M13 * c.P.Z + res.M14 * c.P.D;
-                double y = res.M21 * c.P.X + res.M22 * c.P.Y + res.M23 * c.P.Z + res.M24 * c.P.D;
-
-                if(d != 0)
-                {
-                    x /= d;
-                    y /= d;
-                    z /= d;
-                    d /= d;
-                }
-
-                pp.X = x;
-                pp.Y = y;
-                pp.Z = z;
-                pp.D = d;
-
-                c.PP = pp;
 
                 Coords n = new Coords();
 
@@ -3529,55 +3483,70 @@ namespace CG_Project3
                 triangles.Add(new Triangle(vertices[m * n + 1], vertices[(n - 1) * m + i + 1], vertices[(n - 1) * m + i + 2]) { c = c3 });
             }
             triangles.Add(new Triangle(vertices[m * n + 1], vertices[m * n], vertices[(n - 1) * m + 1]) { c = c3 });
-            
+
+            DrawSphere();
+        }
+
+        private void DrawSphere()
+        {
+            if (!created)
+                return;
+
+            ClearImgB();
+
+            double s = imgWidth / 2 * (1 / Math.Tan(Math.PI / 4));
+            Matrix4x4 p = new Matrix4x4((float)-s, 0, (float)imgWidth / 2, 0,
+                                                 0, (float)s, (float)imgHeight / 2, 0,
+                                                 0, 0, 0, 1,
+                                                 0, 0, 1, 0);
+
+            /*Matrix4x4 Tx = new Matrix4x4(1, 0, 0, 30,
+                                         0, 1, 0, 0,
+                                         0, 0, 1, 0,
+                                         0, 0, 0, 1);*/
+
+            /*double a = Math.PI / 6;
+            Matrix4x4 Rx = new Matrix4x4(1, 0, 0, 0,
+                                         0, (float)Math.Cos(a), (float)-Math.Sin(a), 0,
+                                         0, (float)Math.Sin(a), (float)Math.Cos(a), 0,
+                                         0, 0, 0, 1);*/
+
+            Matrix4x4 cam = GenerateCam();
+
+            Matrix4x4 res = p * cam;
+
+            foreach(var c in vertices)
+            {
+                Coords pp = new Coords();
+
+                double z = res.M31 * c.P.X + res.M32 * c.P.Y + res.M33 * c.P.Z + res.M34 * c.P.D;
+                double d = res.M41 * c.P.X + res.M42 * c.P.Y + res.M43 * c.P.Z + res.M44 * c.P.D;
+                double x = res.M11 * c.P.X + res.M12 * c.P.Y + res.M13 * c.P.Z + res.M14 * c.P.D;
+                double y = res.M21 * c.P.X + res.M22 * c.P.Y + res.M23 * c.P.Z + res.M24 * c.P.D;
+
+                if (d != 0)
+                {
+                    x /= d;
+                    y /= d;
+                    z /= d;
+                    d /= d;
+                }
+
+                pp.X = x;
+                pp.Y = y;
+                pp.Z = z;
+                pp.D = d;
+
+                c.PP = pp;
+            }
+
             foreach (var t in triangles)
             {
-                /*List<Vert> list = new List<Vert>();
-                t.v1.PP = new Coords();
-                t.v2.PP = new Coords();
-                t.v3.PP = new Coords();
-                list.Add(t.v1);
-                list.Add(t.v2);
-                list.Add(t.v3);
-
-                foreach (var c in list)
-                {
-                    //c.P.Z += 5;
-                    double z = res.M31 * c.P.X + res.M32 * c.P.Y + res.M33 * c.P.Z + res.M34 * c.P.D;
-                    double d = res.M41 * c.P.X + res.M42 * c.P.Y + res.M43 * c.P.Z + res.M44 * c.P.D;
-                    //double x = 0;
-                    //double y = 0;
-                    double x = res.M11 * c.P.X + res.M12 * c.P.Y + res.M13 * c.P.Z + res.M14 * c.P.D;
-                    double y = res.M21 * c.P.X + res.M22 * c.P.Y + res.M23 * c.P.Z + res.M24 * c.P.D;
-                    if (d != 0)
-                    {
-                        //x = res.M11 * c.P.X + res.M13;
-                        //y = res.M22 * c.P.Y + res.M23;
-                        x /= d;
-                        y /= d;
-                        z /= d;
-                        //double x2 = (res.M11 * c.P.X + res.M12 * c.P.Y + res.M13 * c.P.Z + res.M14 * c.P.D) / d;
-                        //double y2 = (res.M21 * c.P.X + res.M22 * c.P.Y + res.M23 * c.P.Z + res.M24 * c.P.D) / d;
-                        d /= d;
-                    }
-                    /*else
-                    {
-                        x = res.M11 * c.P.X + res.M13;
-                        y = res.M22 * c.P.Y + res.M23;
-                    }
-
-                    c.PP.X = x;
-                    c.PP.Y = y;
-                    c.PP.Z = z;
-                    c.PP.D = d;
-                }*/
-
                 Vector3D v1 = new Vector3D(t.v2.PP.X - t.v1.PP.X, t.v2.PP.Y - t.v1.PP.Y, 0);
                 Vector3D v2 = new Vector3D(t.v3.PP.X - t.v1.PP.X, t.v3.PP.Y - t.v1.PP.Y, 0);
-                Vector3D cross = new Vector3D();
-                cross = Vector3D.CrossProduct(v1, v2);
+                Vector3D cross = Vector3D.CrossProduct(v1, v2);
 
-                if(cross.Z > 0)
+                if (cross.Z > 0)
                 {
                     if (color)
                     {
@@ -3592,6 +3561,7 @@ namespace CG_Project3
                 }
             }
         }
+
         private Matrix4x4 GenerateCam()
         {
             Vector3D cPos = new Vector3D(cPosX, cPosY, cPosZ);
@@ -3882,6 +3852,8 @@ namespace CG_Project3
 
         private void Interpol2(Triangle tr)
         {
+            writeableBitmap.Lock();
+
             List<Vert> verts = new List<Vert>();
             verts.Add(tr.v1);
             verts.Add(tr.v2);
@@ -4060,8 +4032,6 @@ namespace CG_Project3
                         vert2.PP = PP2;
                         vert2.N = N2;
 
-                        //Interpol1(vert, vert2, tr.c);
-
                         //interpolate
                         for (int k = (int)ActiveEdgeTable3D[j].x; k <= ActiveEdgeTable3D[j+1].x; k++)
                         {
@@ -4090,13 +4060,247 @@ namespace CG_Project3
 
                             var newcol = PhongCol(vert3, tr.c);
                             DrawPixel((int)vert3.PP.X, (int)vert3.PP.Y, newcol);
+                            //DrawBrush((int)vert3.PP.X, (int)vert3.PP.Y, newcol, 3);
                         }
-
-                        //Interpol1(vert, vert2, tr.c);
                     }
                 }
                 foreach (var item in ActiveEdgeTable3D)
                     item.Step();
+            }
+
+            writeableBitmap.Unlock();
+        }
+
+        private void Helper(Vert v1, Vert v2, Point p, Color c)
+        {
+            Point p1 = new Point(v1.PP.X, v1.PP.Y);
+            Point p2 = new Point(v2.PP.X, v2.PP.Y);
+
+            var numer = p - p1;
+            var denom = p2 - p1;
+            var t = numer.Length / denom.Length;
+
+            Coords PP = v1.PP + (v2.PP - v1.PP) * t;
+            PP.X = p.X;
+            PP.Y = p.Y;
+            double u;
+            if (v1.PP.Z == v2.PP.Z)
+                u = t;
+            else
+                u = (1 / PP.Z - 1 / v1.PP.Z) / (1 / v2.PP.Z - 1 / v1.PP.Z);
+
+            Coords P = v1.P + (v2.P - v1.P) * u;
+            Coords N = v1.N + (v2.N - v1.N) * u;
+
+            Vert vert = new Vert(P);
+            vert.PP = PP;
+            vert.N = N;
+
+            var newcol = PhongCol(vert, c);
+            DrawBrush((int)vert.PP.X, (int)vert.PP.Y, newcol, 1); //Change 1 to 3 for smoother sphere but slower program
+
+        }
+
+        private void Interpol3(Vert v1, Vert v2, Color c)
+        {
+            int dx = (int)v2.PP.X - (int)v1.PP.X;
+            int dy = (int)v2.PP.Y - (int)v1.PP.Y;
+
+            if (dx >= 0 && dy >= 0)
+            {
+                if (Math.Abs(dx) > Math.Abs(dy))
+                {
+                    int d = 2 * dy - dx;
+                    int dH = 2 * dy;
+                    int dV = 2 * (dy - dx);
+                    int x = (int)v1.PP.X, y = (int)v1.PP.Y;
+                    Helper(v1, v2, new Point(x, y), c);
+                    while (x < (int)v2.PP.X)
+                    {
+                        if (d < 0)
+                        {
+                            d += dH;
+                            x++;
+                        }
+                        else
+                        {
+                            d += dV;
+                            x++;
+                            y++;
+                        }
+                        Helper(v1, v2, new Point(x, y), c);
+                    }
+                }
+                else
+                {
+                    int d = 2 * dx - dy;
+                    int dH = 2 * dx;
+                    int dV = 2 * (dx - dy);
+                    int x = (int)v1.PP.X, y = (int)v1.PP.Y;
+                    Helper(v1, v2, new Point(x, y), c);
+                    while (y < (int)v2.PP.Y)
+                    {
+                        if (d < 0)
+                        {
+                            d += dH;
+                            y++;
+                        }
+                        else
+                        {
+                            d += dV;
+                            y++;
+                            x++;
+                        }
+                        Helper(v1, v2, new Point(x, y), c);
+                    }
+                }
+            }
+            if (dx < 0 && dy >= 0)
+            {
+                if (Math.Abs(dx) > Math.Abs(dy))
+                {
+                    int d = 2 * dy + dx;
+                    int dH = 2 * dy;
+                    int dV = 2 * (dy + dx);
+                    int x = (int)v1.PP.X, y = (int)v1.PP.Y;
+                    Helper(v1, v2, new Point(x, y), c);
+                    while (x > (int)v2.PP.X)
+                    {
+                        if (d < 0)
+                        {
+                            d += dH;
+                            x--;
+                        }
+                        else
+                        {
+                            d += dV;
+                            x--;
+                            y++;
+                        }
+                        Helper(v1, v2, new Point(x, y), c);
+                    }
+                }
+                else
+                {
+                    int d = 2 * -dx - dy;
+                    int dH = 2 * -dx;
+                    int dV = 2 * (-dx - dy);
+                    int x = (int)v1.PP.X, y = (int)v1.PP.Y;
+                    Helper(v1, v2, new Point(x, y), c);
+                    while (y < (int)v2.PP.Y)
+                    {
+                        if (d < 0)
+                        {
+                            d += dH;
+                            y++;
+                        }
+                        else
+                        {
+                            d += dV;
+                            y++;
+                            x--;
+                        }
+                        Helper(v1, v2, new Point(x, y), c);
+                    }
+                }
+            }
+            if (dx < 0 && dy < 0)
+            {
+                if (Math.Abs(dx) > Math.Abs(dy))
+                {
+                    int d = 2 * -dy + dx;
+                    int dH = 2 * -dy;
+                    int dV = 2 * (-dy + dx);
+                    int x = (int)v1.PP.X, y = (int)v1.PP.Y;
+                    Helper(v1, v2, new Point(x, y), c);
+                    while (x > (int)v2.PP.X)
+                    {
+                        if (d < 0)
+                        {
+                            d += dH;
+                            x--;
+                        }
+                        else
+                        {
+                            d += dV;
+                            x--;
+                            y--;
+                        }
+                        Helper(v1, v2, new Point(x, y), c);
+                    }
+                }
+                else
+                {
+                    int d = 2 * -dx + dy;
+                    int dH = 2 * -dx;
+                    int dV = 2 * (-dx + dy);
+                    int x = (int)v1.PP.X, y = (int)v1.PP.Y;
+                    Helper(v1, v2, new Point(x, y), c);
+                    while (y > (int)v2.PP.Y)
+                    {
+                        if (d < 0)
+                        {
+                            d += dH;
+                            y--;
+                        }
+                        else
+                        {
+                            d += dV;
+                            y--;
+                            x--;
+                        }
+                        Helper(v1, v2, new Point(x, y), c);
+                    }
+                }
+            }
+            if (dx >= 0 && dy < 0)
+            {
+                if (Math.Abs(dx) > Math.Abs(dy))
+                {
+                    int d = 2 * -dy - dx;
+                    int dH = 2 * -dy;
+                    int dV = 2 * (-dy - dx);
+                    int x = (int)v1.PP.X, y = (int)v1.PP.Y;
+                    Helper(v1, v2, new Point(x, y), c);
+                    while (x < (int)v2.PP.X)
+                    {
+                        if (d < 0)
+                        {
+                            d += dH;
+                            x++;
+                        }
+                        else
+                        {
+                            d += dV;
+                            x++;
+                            y--;
+                        }
+                        Helper(v1, v2, new Point(x, y), c);
+                    }
+                }
+                else
+                {
+                    int d = 2 * dx + dy;
+                    int dH = 2 * dx;
+                    int dV = 2 * (dx + dy);
+                    int x = (int)v1.PP.X, y = (int)v1.PP.Y;
+                    Helper(v1, v2, new Point(x, y), c);
+                    while (y > (int)v2.PP.Y)
+                    {
+                        if (d < 0)
+                        {
+                            d += dH;
+                            y--;
+                        }
+                        else
+                        {
+                            d += dV;
+                            y--;
+                            x++;
+                        }
+                        Helper(v1, v2, new Point(x, y), c);
+                    }
+                }
             }
         }
 
@@ -4177,7 +4381,8 @@ namespace CG_Project3
             cPosY = (int)ySlider.Value;
             cPosZ = (int)zSlider.Value;
             //ClearImgB();
-            CalcSphere(this, e);
+            //CalcSphere(this, e);
+            DrawSphere();
         }
 
         private void LSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -4189,7 +4394,8 @@ namespace CG_Project3
             pointLights[0].point.Y = (int)yLSlider.Value;
             pointLights[0].point.Z = (int)zLSlider.Value;
             //ClearImgB();
-            CalcSphere(this, e);
+            //CalcSphere(this, e);
+            DrawSphere();
         }
 
         public class AET3D
@@ -4210,6 +4416,20 @@ namespace CG_Project3
         {
             public int y;
             public List<AET3D> aETs;
+        }
+
+        private void RecalcSphere(object sender, RoutedEventArgs e)
+        {
+            if (!created)
+                return;
+
+            int newn = Int32.Parse(sphereN.Text);
+            int newm = Int32.Parse(sphereM.Text);
+            int newr = Int32.Parse(sphereR.Text);
+            n = newn;
+            m = newm;
+            r = newr;
+            CalcSphere(this, e);
         }
 
         #endregion

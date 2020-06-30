@@ -6,7 +6,7 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:local="clr-namespace:CG_Project3"
         mc:Ignorable="d"
-        Title="Vector Graphics" Height="650" Width="800" MinHeight="400" MinWidth="500">
+        Title="Vector Graphics" Height="680" Width="800" MinHeight="400" MinWidth="500">
     <Grid Background="WhiteSmoke">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="150"/>
@@ -101,6 +101,13 @@
         <Slider x:Name="zLSlider" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="15,530,0,0" Width="100" Minimum="-100" Maximum="100" SmallChange="1" ValueChanged="LSlider_ValueChanged" Value="20"/>
         <TextBox x:Name="zLSlT" Grid.Column="0" Text="{Binding ElementName=zLSlider, Path=Value, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Left" Height="20" Width="25" Margin="115,530,0,0" TextAlignment="Center" VerticalAlignment="Top"/>
 
+        <Label Content="n:" Margin="0,550,0,0" />
+        <TextBox x:Name="sphereN" Grid.Column="0" Text="20" HorizontalAlignment="Left" Height="20" Width="30" Margin="15,555,0,0" TextAlignment="Center" VerticalAlignment="Top"/>
+        <Label Content="m:" Margin="47,550,0,0" />
+        <TextBox x:Name="sphereM" Grid.Column="0" Text="20" HorizontalAlignment="Left" Height="20" Width="30" Margin="65,555,0,0" TextAlignment="Center" VerticalAlignment="Top"/>
+        <Label Content="r:" Margin="100,550,0,0" />
+        <TextBox x:Name="sphereR" Grid.Column="0" Text="8" HorizontalAlignment="Left" Height="20" Width="30" Margin="115,555,0,0" TextAlignment="Center" VerticalAlignment="Top"/>
+        <Button HorizontalAlignment="Left" VerticalAlignment="Top" Width="110" Content="Recalculate sphere" Margin="5,575,0,0" Click="RecalcSphere" />
 
         <Button HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="50" Content="ReadMe" Margin="5,0,0,5" Click="readmeClick" />
 
