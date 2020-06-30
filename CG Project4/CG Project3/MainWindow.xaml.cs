@@ -3436,12 +3436,53 @@ namespace CG_Project3
                 }
             }
 
-            positions.Add(new Coords(0, -r, 0, 1));            
+            positions.Add(new Coords(0, -r, 0, 1));
+
+            //Should one want to transform the sphere, uncomment here
+            /*double a = Math.PI / 6;
+            Matrix4x4 Rx = new Matrix4x4(1, 0, 0, 0,
+                                         0, (float)Math.Cos(a), (float)-Math.Sin(a), 0,
+                                         0, (float)Math.Sin(a), (float)Math.Cos(a), 0,
+                                         0, 0, 0, 1);
+            double b = Math.PI / 6;
+            Matrix4x4 Ry = new Matrix4x4((float)Math.Cos(b), 0, (float)Math.Sin(b), 0,
+                                         0, 1, 0, 0,
+                                         (float)-Math.Sin(b), 0, (float)Math.Cos(b), 0,
+                                         0, 0, 0, 1);
+            double ab = Math.PI / 6;
+            Matrix4x4 Rz = new Matrix4x4((float)Math.Cos(ab), (float)-Math.Sin(ab), 0, 0,
+                                         (float)Math.Sin(ab), (float)Math.Cos(ab), 0, 0,
+                                         0, 0, 1, 0,
+                                         0, 0, 0, 1);
+            Matrix4x4 res = Rx * Ry * Rz;*/
 
             vertices = new List<Vert>();
             foreach (var i in positions)
             {
                 Vert c = new Vert(i);
+
+                //Should one want to transform the sphere, uncomment here
+                /*Coords p = new Coords();
+
+                double z = res.M31 * c.P.X + res.M32 * c.P.Y + res.M33 * c.P.Z + res.M34 * c.P.D;
+                double d = res.M41 * c.P.X + res.M42 * c.P.Y + res.M43 * c.P.Z + res.M44 * c.P.D;
+                double x = res.M11 * c.P.X + res.M12 * c.P.Y + res.M13 * c.P.Z + res.M14 * c.P.D;
+                double y = res.M21 * c.P.X + res.M22 * c.P.Y + res.M23 * c.P.Z + res.M24 * c.P.D;
+
+                if (d != 0)
+                {
+                    x /= d;
+                    y /= d;
+                    z /= d;
+                    d /= d;
+                }
+
+                p.X = x;
+                p.Y = y;
+                p.Z = z;
+                p.D = d;
+
+                c.P = p;*/
 
                 Coords n = new Coords();
 

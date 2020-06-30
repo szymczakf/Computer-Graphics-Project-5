@@ -107,7 +107,7 @@
         <TextBox x:Name="sphereM" Grid.Column="0" Text="20" HorizontalAlignment="Left" Height="20" Width="30" Margin="65,555,0,0" TextAlignment="Center" VerticalAlignment="Top"/>
         <Label Content="r:" Margin="100,550,0,0" />
         <TextBox x:Name="sphereR" Grid.Column="0" Text="8" HorizontalAlignment="Left" Height="20" Width="30" Margin="115,555,0,0" TextAlignment="Center" VerticalAlignment="Top"/>
-        <Button HorizontalAlignment="Left" VerticalAlignment="Top" Width="110" Content="Recalculate sphere" Margin="5,575,0,0" Click="RecalcSphere" />
+        <Button HorizontalAlignment="Left" VerticalAlignment="Top" Width="110" Content="Recalculate sphere" Margin="5,580,0,0" Click="RecalcSphere" />
 
         <Button HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="50" Content="ReadMe" Margin="5,0,0,5" Click="readmeClick" />
 
