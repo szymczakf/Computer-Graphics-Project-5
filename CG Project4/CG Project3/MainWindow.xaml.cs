@@ -93,6 +93,8 @@ namespace CG_Project3
             cPosX = 0;
             cPosY = 10;
             cPosZ = 30;
+            cr = 30;
+            sliding = true;
 
             zSlider.Minimum = r;
 
@@ -3375,6 +3377,9 @@ namespace CG_Project3
         int cPosX;
         int cPosY;
         int cPosZ;
+        
+        double cr;
+        bool sliding;
 
         //Color(s) of the sphere
         //Ring 1
@@ -3617,7 +3622,6 @@ namespace CG_Project3
                                           (float)cY.X, (float)cY.Y, (float)cY.Z, (float)Vector3D.DotProduct(cY, cPos),
                                           (float)cZ.X, (float)cZ.Y, (float)cZ.Z, (float)Vector3D.DotProduct(cZ, cPos),
                                           0, 0, 0, 1);
-
             return res;
         }
 
@@ -4418,11 +4422,23 @@ namespace CG_Project3
             if (!created)
                 return;
 
-            cPosX = (int)xSlider.Value;
-            cPosY = (int)ySlider.Value;
-            cPosZ = (int)zSlider.Value;
-            //ClearImgB();
-            //CalcSphere(this, e);
+            if(sliding)
+            {
+                cPosX = (int)xSlider.Value;
+                cPosY = (int)ySlider.Value;
+                cPosZ = (int)zSlider.Value;
+            }
+            else
+            {
+                int x = (int)xSlider.Value;
+                int y = (int)ySlider.Value;
+                int z = (int)zSlider.Value;
+                cr = z;
+                cPosZ = (int)(Math.Min(Math.Cos(y * Math.PI / 180) * cr, Math.Cos(x * Math.PI / 180) * cr));
+                cPosY = (int)(Math.Sin(y * Math.PI / 180) * cr);
+                cPosX = (int)(Math.Sin(x * Math.PI / 180) * cr);
+            }
+
             DrawSphere();
         }
 
@@ -4434,8 +4450,7 @@ namespace CG_Project3
             pointLights[0].point.X = (int)xLSlider.Value;
             pointLights[0].point.Y = (int)yLSlider.Value;
             pointLights[0].point.Z = (int)zLSlider.Value;
-            //ClearImgB();
-            //CalcSphere(this, e);
+
             DrawSphere();
         }
 
@@ -4471,6 +4486,18 @@ namespace CG_Project3
             m = newm;
             r = newr;
             CalcSphere(this, e);
+        }
+
+        private void slideCheck_Checked(object sender, RoutedEventArgs e)
+        {
+            sliding = false;
+            DrawSphere();
+        }
+
+        private void slideCheck_Unchecked(object sender, RoutedEventArgs e)
+        {
+            sliding = true;
+            DrawSphere();
         }
 
         #endregion

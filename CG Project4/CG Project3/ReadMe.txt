@@ -85,6 +85,11 @@ The "Camera" sliders are responsible for the position of the camera (the sphere 
 The "Point light" sliders are responsible for the position of the white point light illuminating the sphere.
 One can also change the attributes of the sphere by changing the values of n, m and r and clicking the "Recalculate Sphere" button.
 
+There are two camera options: a liding camera or a rotating camera.
+The rotating camera rotates its position along the x and y axes.
+The sliding camera simply changes its position along the x and y axes.
+The default camera is the sliding one, to change to the rotating camera, check the "Rotating camera" checkbox.
+
 All the coefficients for the shading as well as for the size of the sphere are available in code and commented properly for ease of use.
 Search for a comment "3D Project" in order to find them more easily (region Project5).
 Should one want to rotate the sphere, uncomment the specified parts in the function "CalcSphere".
